@@ -1,90 +1,166 @@
-## The Boilerplate
+# NestJS + OpenAI ChatGPT Starter
 
-I remember the frustration I felt when I was trying to integrate the "chatgpt" pacakge with NestJS for the first time. I have probably saved you some time, so **please leave a ⭐ on this project**.
+A NestJS starter project integrated with the **official OpenAI API** for building ChatGPT-powered applications.
 
 ![Patrick Star](https://media0.giphy.com/media/XdyyR97fGCELK/giphy.gif?cid=ecf05e47gt29de2jbwlhheibrr895r8qar1w8u40dz99psf8&rid=giphy.gif&ct=g)
 
-### The Issue
+## ✨ Features
 
-One issue that users may encounter when using the "chatgpt" library is the error:
-`[ERR_REQUIRE_ESM]: require() of ES Module ...`.
+- ✅ **Official OpenAI SDK** - Uses the maintained and reliable `openai` package
+- ✅ **Environment Configuration** - Secure API key management with `@nestjs/config`
+- ✅ **TypeScript Support** - Full type safety
+- ✅ **Ready-to-use ChatGPT Service** - Pre-configured service for chat completions
+- ✅ **REST API Endpoint** - Example POST endpoint to interact with ChatGPT
 
-This error occurs because the "chatgpt" library does not support CommonJS, the module system used by require().
+## 🚀 Quick Start
 
-I hope this boilerplate project helps make your experience with NestJS and the "chatgpt" library a little smoother. If you have any questions or run into any issues, please don't hesitate to open an issue in the repository.
-
----
-
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
+### 1. Installation
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Running the app
+### 2. Environment Setup
+
+Create a `.env` file in the root directory:
 
 ```bash
-# development
-$ npm run start
+cp .env.example .env
+```
 
-# watch mode
-$ npm run start:dev
+Then add your OpenAI API key to `.env`:
+
+```env
+OPENAI_API_KEY=sk-your-actual-api-key-here
+```
+
+**Get your API key from:** [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+
+### 3. Running the Application
+
+```bash
+# development mode
+npm run start
+
+# watch mode (recommended for development)
+npm run start:dev
 
 # production mode
-$ npm run start:prod
+npm run start:prod
 ```
 
-## Test
+The server will start on `http://localhost:3000`
+
+## 📡 API Usage
+
+### Chat Endpoint
+
+Send a POST request to `/chat` with a message:
+
+```bash
+curl -X POST http://localhost:3000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello, ChatGPT!"}'
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Hello, ChatGPT!",
+  "response": "Hello! How can I assist you today?"
+}
+```
+
+### Example with JavaScript/Fetch
+
+```javascript
+fetch('http://localhost:3000/chat', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    message: 'What is NestJS?'
+  })
+})
+  .then(res => res.json())
+  .then(data => console.log(data.response));
+```
+
+## 🏗️ Project Structure
+
+```
+src/
+├── app.controller.ts      # Main controller with /chat endpoint
+├── app.module.ts          # Root module with ConfigModule
+├── app.service.ts         # App service
+├── chatgpt.service.ts     # ChatGPT service with OpenAI integration
+└── main.ts                # Application entry point
+```
+
+## 🔧 Configuration
+
+The `ChatGPTService` is configured with:
+
+- **Model:** `gpt-3.5-turbo` (you can change to `gpt-4` or other models)
+- **Max Tokens:** 500
+- **Temperature:** 0.7
+
+Modify these in `src/chatgpt.service.ts` as needed.
+
+## 🧪 Testing
 
 ```bash
 # unit tests
-$ npm run test
+npm run test
 
 # e2e tests
-$ npm run test:e2e
+npm run test:e2e
 
 # test coverage
-$ npm run test:cov
+npm run test:cov
 ```
 
-## Support
+## 📝 Why This Boilerplate?
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+The old `chatgpt` package (v3.x) had several issues:
+- ❌ Used unofficial browser-based authentication
+- ❌ Deprecated and unreliable
+- ❌ CommonJS/ESM module conflicts
+- ❌ No longer maintained
 
-## Stay in touch
+This starter uses the **official OpenAI SDK** which:
+- ✅ Is actively maintained by OpenAI
+- ✅ Supports all latest models (GPT-4, GPT-3.5-turbo, etc.)
+- ✅ Has proper TypeScript support
+- ✅ Uses official API keys (secure and reliable)
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 🔒 Security Notes
 
-## License
+- Never commit your `.env` file to version control
+- Keep your OpenAI API key secret
+- The `.env` file is already in `.gitignore`
+- Use `.env.example` as a template for sharing
 
-Nest is [MIT licensed](LICENSE).
+## 📚 Documentation
+
+- [NestJS Documentation](https://docs.nestjs.com/)
+- [OpenAI API Documentation](https://platform.openai.com/docs/)
+- [OpenAI Node.js SDK](https://github.com/openai/openai-node)
+
+## 💡 Tips
+
+- Monitor your API usage at [platform.openai.com/usage](https://platform.openai.com/usage)
+- Set usage limits to avoid unexpected charges
+- Consider implementing rate limiting for production use
+- Add error handling and retry logic for production applications
+
+## 📄 License
+
+This project is [MIT licensed](LICENSE).
+
+---
+
+If this boilerplate saved you time, please **leave a ⭐** on the repository!
