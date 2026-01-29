@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: nestjs-chatgpt-starter
+    runtime: node
+    region: oregon # or choose: ohio, frankfurt, singapore
+    plan: free # or: starter, standard, pro
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false # You'll set this in Render dashboard
+      - key: MEM0_API_KEY
+        sync: false # You'll set this in Render dashboard (if using Mem0)
+    healthCheckPath: /

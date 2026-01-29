@@ -31,7 +31,37 @@ export class ChatGPTService {
         max_tokens: 500,
         temperature: 0.7,
       });
-      console.log(response.choices[0]?.message?.content || 'No response from AI');
+      // console.log(response.choices[0]?.message?.content || 'No response from AI');
+
+      return response.choices[0]?.message?.content || 'No response from AI';
+    } catch (error) {
+      throw new Error(`OpenAI API error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Send a message to ChatGPT with memory context
+   * @param message - The user's message
+   * @param context - Memory context to include in the conversation
+   * @returns The AI's response
+   */
+  async chatWithContext(message: string, context: string): Promise<string> {
+    try {
+      const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+
+      // Add memory context as system message if available
+      if (context) {
+        messages.push({ role: 'system', content: context });
+      }
+
+      // Add the user's message
+      messages.push({ role: 'user', content: message });
+
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages,
+        temperature: 0.7,
+      });
 
       return response.choices[0]?.message?.content || 'No response from AI';
     } catch (error) {

@@ -1,0 +1,470 @@
+{
+  "info": {
+    "name": "NestJS Mem0 Memory Integration",
+    "description": "API collection for NestJS ChatGPT application with Mem0 memory integration.\n\nFeatures:\n- User management\n- Memory-enabled chat\n- File upload for memory extraction\n- Semantic search\n- Memory CRUD operations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "user-demo-001",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "agentId",
+      "value": "assistant-v1",
+      "type": "string"
+    },
+    {
+      "key": "memoryId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Get Hello",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Basic health check endpoint"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Basic Chat (No Memory)",
+      "item": [
+        {
+          "name": "Chat without Memory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hello, what can you help me with?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["chat"]
+            },
+            "description": "Basic chat endpoint without memory integration"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            },
+            "description": "Get all registered users including the default demo user"
+          }
+        },
+        {
+          "name": "Create User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('userId', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"metadata\": {\n    \"role\": \"developer\",\n    \"team\": \"backend\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            },
+            "description": "Create a new user. The response userId is automatically saved to collection variables."
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Get a specific user by their ID"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Delete a user by ID"
+          }
+        },
+        {
+          "name": "Create Session for User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.sessionId) {",
+                  "    pm.collectionVariables.set('sessionId', jsonData.sessionId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}", "session"]
+            },
+            "description": "Generate a new session ID for a user. Useful for grouping conversations."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Memory Chat",
+      "item": [
+        {
+          "name": "Chat with User Memory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"I'm a Python developer and I love building web applications\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/memory/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "chat"]
+            },
+            "description": "Chat with memory - stores and retrieves user-level memories"
+          }
+        },
+        {
+          "name": "Chat with Session Memory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"I prefer using FastAPI for REST APIs\",\n  \"userId\": \"{{userId}}\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/memory/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "chat"]
+            },
+            "description": "Chat with session-scoped memory for conversation context"
+          }
+        },
+        {
+          "name": "Chat with Agent Memory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What do you remember about me?\",\n  \"userId\": \"{{userId}}\",\n  \"agentId\": \"{{agentId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/memory/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "chat"]
+            },
+            "description": "Chat with agent-scoped memory for agent-specific knowledge"
+          }
+        },
+        {
+          "name": "Chat with All Scopes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Based on what you know about me, suggest a project I could work on\",\n  \"userId\": \"{{userId}}\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"agentId\": \"{{agentId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/memory/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "chat"]
+            },
+            "description": "Chat using all memory scopes: user, session, and agent"
+          }
+        }
+      ]
+    },
+    {
+      "name": "File Upload",
+      "item": [
+        {
+          "name": "Upload Text File for Memory",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select a .txt, .md, or other text file"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "agentId",
+                  "value": "{{agentId}}",
+                  "type": "text",
+                  "description": "Optional: Agent scope for the memories"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/memory/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "upload"]
+            },
+            "description": "Upload a text file to extract and store memories. Mem0 will automatically extract relevant information."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Memory Search",
+      "item": [
+        {
+          "name": "Semantic Search Memories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/memory/search?q=programming preferences&userId={{userId}}&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "programming preferences",
+                  "description": "Natural language search query"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID to search memories for"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Maximum number of results"
+                }
+              ]
+            },
+            "description": "Semantic search across user memories using natural language"
+          }
+        },
+        {
+          "name": "Search with Agent Filter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/memory/search?q=what does the user like&userId={{userId}}&agentId={{agentId}}&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "what does the user like"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "agentId",
+                  "value": "{{agentId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Search memories filtered by agent"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Memory CRUD",
+      "item": [
+        {
+          "name": "Get All User Memories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/memory/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "user", "{{userId}}"]
+            },
+            "description": "Get all memories stored for a specific user"
+          }
+        },
+        {
+          "name": "Get Agent Memories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/memory/agent/{{agentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "agent", "{{agentId}}"]
+            },
+            "description": "Get all memories stored for a specific agent"
+          }
+        },
+        {
+          "name": "Get Specific Memory",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/memory/{{memoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "{{memoryId}}"]
+            },
+            "description": "Get a specific memory by its ID"
+          }
+        },
+        {
+          "name": "Get Memory History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/memory/{{memoryId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "{{memoryId}}", "history"]
+            },
+            "description": "Get the history of changes for a specific memory"
+          }
+        },
+        {
+          "name": "Delete Specific Memory",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/memory/{{memoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "{{memoryId}}"]
+            },
+            "description": "Delete a specific memory by ID"
+          }
+        },
+        {
+          "name": "Delete All User Memories",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/memory/user/{{userId}}/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["memory", "user", "{{userId}}", "all"]
+            },
+            "description": "Delete all memories for a specific user. Use with caution!"
+          }
+        }
+      ]
+    }
+  ]
+}
