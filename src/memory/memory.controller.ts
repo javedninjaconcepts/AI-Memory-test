@@ -77,7 +77,7 @@ export class MemoryController {
       // Step 2: Filter by score > 0.5 and get top 3 highest scores
       console.log('Memory search scores:', searchResults.map(m => m.score));
       const relevantMemories = searchResults
-        .filter((m) => m.score > 3.5)
+        .filter((m) => m.score > .35)
         .sort((a, b) => b.score - a.score)
         .slice(0, 3);
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import * as readline from 'readline';
+import * as fs from 'fs';
 
 // Parse command line arguments
 function parseArgs(): { apiUrl: string; help: boolean } {
@@ -37,17 +38,23 @@ if (SHOW_HELP) {
 NestJS ChatGPT Terminal Client
 
 Usage:
-  npx ts-node cli-chat.ts [options] [url]
+  curl -sL <server>/cli.js | node - [options] [url]
 
 Options:
   -u, --url <url>   API server URL (default: http://localhost:4000)
   -h, --help        Show this help message
 
 Examples:
-  npx ts-node cli-chat.ts                           # Connect to localhost:4000
-  npx ts-node cli-chat.ts http://localhost:3000     # Connect to localhost:3000
-  npx ts-node cli-chat.ts --url https://myapi.com   # Connect to hosted server
-  npx ts-node cli-chat.ts -u https://myapi.com      # Short form
+  # Run from hosted server:
+  curl -sL https://your-server.com/cli.js | node - https://your-server.com
+
+  # Or download and run locally:
+  curl -o chat.js https://your-server.com/cli.js
+  node chat.js https://your-server.com
+
+  # Local development:
+  npx ts-node cli-chat.ts
+  npx ts-node cli-chat.ts http://localhost:3000
 
 Environment:
   API_URL           Can also be set via environment variable
@@ -79,10 +86,34 @@ class TerminalChat {
   private mode: 'basic' | 'memory' = 'memory';
   private currentUser: User | null = null;
   // private sessionId: string | null = null;
+  private ttyInput: fs.ReadStream | null = null;
 
   constructor() {
+    // When running via `curl | node -`, stdin is consumed by the script itself
+    // So we need to read from /dev/tty directly for interactive input
+    let input: NodeJS.ReadableStream = process.stdin;
+    
+    if (!process.stdin.isTTY) {
+      try {
+        // Open /dev/tty for reading (works on Unix/Linux/macOS)
+        const ttyFd = fs.openSync('/dev/tty', 'r');
+        this.ttyInput = fs.createReadStream('', { fd: ttyFd });
+        this.ttyInput.on('error', () => {
+          // Silently handle TTY errors
+        });
+        input = this.ttyInput;
+      } catch {
+        // Fallback to stdin if /dev/tty is not available (Windows or non-interactive)
+        console.error('\n⚠️  Interactive mode not available in this environment.');
+        console.error('   Please download and run the CLI directly:\n');
+        console.error('   curl -o chat.js ' + API_URL + '/cli.js');
+        console.error('   node chat.js ' + API_URL + '\n');
+        process.exit(1);
+      }
+    }
+
     this.rl = readline.createInterface({
-      input: process.stdin,
+      input,
       output: process.stdout,
     });
   }
@@ -107,6 +138,13 @@ class TerminalChat {
       }
     } catch (error) {
       throw new Error(`API request failed: ${error.message}`);
+    }
+  }
+
+  private cleanup(): void {
+    this.rl.close();
+    if (this.ttyInput) {
+      this.ttyInput.close();
     }
   }
 
@@ -320,7 +358,7 @@ class TerminalChat {
       case '/exit':
       case '/q':
         console.log('\n👋 Goodbye!\n');
-        this.rl.close();
+        this.cleanup();
         return false;
 
       case '/mode':
@@ -369,7 +407,7 @@ class TerminalChat {
       console.log('   npx ts-node cli-chat.ts http://localhost:4000');
       console.log('   npx ts-node cli-chat.ts https://your-hosted-server.com');
       console.log('');
-      this.rl.close();
+      this.cleanup();
       return;
     }
 
