@@ -1,18 +1,17 @@
 export interface Mem0Options {
-  // Selective memory extraction
+  // Selective memory extraction (Pro feature)
   includes?: string;
   excludes?: string;
 
-  // Extraction guidelines
+  // Extraction guidelines (Pro feature)
   customInstructions?: string;
 
-  // Custom categories for domain-specific labeling
-  customCategories?: Record<string, string>;
+  // NOTE: customCategories is configured at project level in Mem0 Dashboard
+  // See: https://app.mem0.ai/dashboard/project-settings
 
   // Control options
-  infer?: boolean; // Default true
-  version?: string; // "v2" recommended
-  enableGraph?: boolean; // Build knowledge graph
+  infer?: boolean; // Default true - whether to extract structured memories
+  enableGraph?: boolean; // Build knowledge graph (Pro feature)
 
   // Temporal options
   timestamp?: number; // Unix timestamp

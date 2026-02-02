@@ -25,9 +25,14 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 // cli-chat.ts
 var readline = __toESM(require("readline"));
 var fs = __toESM(require("fs"));
+
+// src/constants.ts
+var DEFAULT_API_URL = "http://localhost:4000";
+
+// cli-chat.ts
 function parseArgs() {
   const args = process.argv.slice(2);
-  let apiUrl = process.env.API_URL || "http://localhost:4000";
+  let apiUrl = process.env.API_URL || DEFAULT_API_URL;
   let help = false;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -135,22 +140,28 @@ var TerminalChat = class {
   printHeader() {
     console.clear();
     console.log("\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557");
-    console.log("\u2551           \u{1F916} NestJS ChatGPT Terminal Client \u{1F916}             \u2551");
+    console.log("\u2551            \u{1F4AA} AI Fitness Coach Terminal \u{1F4AA}                 \u2551");
     console.log("\u2560\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2563");
     console.log(`\u2551  Server: ${API_URL.padEnd(49)}\u2551`);
     console.log("\u2560\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2563");
+    console.log("\u2551  Your AI fitness coach will:                              \u2551");
+    console.log("\u2551    - Remember your goals, preferences & limitations       \u2551");
+    console.log("\u2551    - Ask questions to personalize your experience         \u2551");
+    console.log("\u2551    - Give tailored workout & nutrition advice             \u2551");
+    console.log("\u2560\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2563");
     console.log("\u2551  Commands:                                                 \u2551");
+    console.log("\u2551    /profile   - View your fitness profile analysis        \u2551");
+    console.log("\u2551    /memories  - View all stored memories                  \u2551");
+    console.log("\u2551    /user      - Switch or create user                     \u2551");
     console.log("\u2551    /mode      - Switch between basic and memory chat      \u2551");
-    console.log("\u2551    /user      - Create or switch user (memory mode)       \u2551");
-    console.log("\u2551    /memories  - View your memories (memory mode)          \u2551");
     console.log("\u2551    /clear     - Clear screen                              \u2551");
-    console.log("\u2551    /help      - Show this help                            \u2551");
-    console.log("\u2551    /quit      - Exit the chat                             \u2551");
+    console.log("\u2551    /help      - Show commands                             \u2551");
+    console.log("\u2551    /quit      - Exit                                      \u2551");
     console.log("\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255D");
     console.log();
   }
   printStatus() {
-    const modeStr = this.mode === "memory" ? "\u{1F9E0} Memory Mode" : "\u{1F4AC} Basic Mode";
+    const modeStr = this.mode === "memory" ? "\u{1F4AA} Fitness Coach" : "\u{1F4AC} Basic Chat";
     const userStr = this.currentUser ? `\u{1F464} ${this.currentUser.name}` : "\u{1F464} No user";
     console.log(`
 [${modeStr}] [${userStr}]
@@ -178,23 +189,95 @@ var TerminalChat = class {
       return;
     }
     try {
-      console.log("\n\u23F3 Thinking (with memory)...\n");
+      console.log("\n\u23F3 Coach is thinking...\n");
       const response = await this.fetch("/memory/chat", {
         method: "POST",
         body: JSON.stringify({
           message,
           userId: this.currentUser.id
-          // sessionId: this.sessionId,
         })
       });
       if (response.success) {
-        console.log("\u{1F916} AI:", response.response);
-        if (response.newMemoriesCreated > 0) {
+        if (response.isNewUser) {
+          console.log("\u{1F44B} Welcome! This is your first session.\n");
+        }
+        console.log("\u{1F4AA} Coach:", response.response);
+        if (response.profileCompleteness !== void 0) {
+          const completeness = response.profileCompleteness;
+          const barLength = 20;
+          const filled = Math.round(completeness / 100 * barLength);
+          const empty = barLength - filled;
+          const bar = "\u2588".repeat(filled) + "\u2591".repeat(empty);
           console.log(`
-\u{1F4BE} ${response.newMemoriesCreated} new memory(ies) stored`);
+\u{1F4CA} Profile: [${bar}] ${completeness}%`);
+        }
+        if (response.newMemoriesCreated > 0) {
+          console.log(`\u{1F4BE} ${response.newMemoriesCreated} new info saved`);
         }
       } else {
         console.log("\u274C Error:", response.error || "Unknown error");
+      }
+    } catch (error) {
+      console.log("\u274C Error:", error.message);
+    }
+  }
+  async handleProfileCommand() {
+    if (!this.currentUser) {
+      console.log("\n\u26A0\uFE0F  No user selected. Use /user to create or select a user first.\n");
+      return;
+    }
+    try {
+      console.log("\n\u{1F4CA} Analyzing your fitness profile...\n");
+      const response = await this.fetch(
+        `/memory/profile/${this.currentUser.id}/analysis`
+      );
+      if (response.success) {
+        const profile = response.profile;
+        console.log("\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557");
+        console.log("\u2551           Your Fitness Profile               \u2551");
+        console.log("\u2560\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2563");
+        const barLength = 20;
+        const filled = Math.round(profile.completionPercentage / 100 * barLength);
+        const empty = barLength - filled;
+        const bar = "\u2588".repeat(filled) + "\u2591".repeat(empty);
+        console.log(`\u2551  Completeness: [${bar}] ${profile.completionPercentage}%    \u2551`);
+        console.log(`\u2551  Total Memories: ${String(profile.totalMemories).padEnd(27)}\u2551`);
+        console.log("\u2560\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2563");
+        const checkMark = (has) => has ? "\u2705" : "\u274C";
+        console.log(`\u2551  ${checkMark(profile.hasBasicInfo)} Basic Info (name, age, weight)          \u2551`);
+        console.log(`\u2551  ${checkMark(profile.hasGoals)} Fitness Goals                           \u2551`);
+        console.log(`\u2551  ${checkMark(profile.hasCurrentFitness)} Current Fitness Level                   \u2551`);
+        console.log(`\u2551  ${checkMark(profile.hasInjuryInfo)} Injuries & Limitations                  \u2551`);
+        console.log(`\u2551  ${checkMark(profile.hasDietInfo)} Diet & Nutrition                        \u2551`);
+        console.log(`\u2551  ${checkMark(profile.hasLifestyleInfo)} Lifestyle (sleep, equipment)            \u2551`);
+        if (profile.missingCategories.length > 0) {
+          console.log("\u2560\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2563");
+          console.log("\u2551  \u{1F4A1} Missing Information:                     \u2551");
+          profile.missingCategories.forEach((cat) => {
+            const categoryName = cat.replace(/_/g, " ");
+            console.log(`\u2551     - ${categoryName.padEnd(37)}\u2551`);
+          });
+          if (profile.suggestedQuestion) {
+            console.log("\u2560\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2563");
+            console.log("\u2551  \u{1F4DD} Suggested to ask:                        \u2551");
+            const words = profile.suggestedQuestion.split(" ");
+            let line = "\u2551     ";
+            for (const word of words) {
+              if (line.length + word.length > 43) {
+                console.log(line.padEnd(47) + "\u2551");
+                line = "\u2551     ";
+              }
+              line += word + " ";
+            }
+            if (line.length > 7) {
+              console.log(line.padEnd(47) + "\u2551");
+            }
+          }
+        }
+        console.log("\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255D");
+        console.log("\n\u{1F4A1} Tip: Just chat naturally to build your profile!\n");
+      } else {
+        console.log("\u274C Failed to analyze profile");
       }
     } catch (error) {
       console.log("\u274C Error:", error.message);
@@ -317,6 +400,9 @@ var TerminalChat = class {
         break;
       case "/memories":
         await this.handleMemoriesCommand();
+        break;
+      case "/profile":
+        await this.handleProfileCommand();
         break;
       case "/clear":
         this.printHeader();

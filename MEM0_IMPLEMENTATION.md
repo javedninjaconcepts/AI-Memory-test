@@ -4,16 +4,24 @@
 
 This document provides a detailed explanation of the Mem0 integration in the NestJS ChatGPT Starter project. Mem0 is a memory layer that enables AI applications to have persistent, contextual memory across conversations.
 
-## Current Status: ✅ Fully Implemented
+## Current Status: ✅ Fully Implemented & Running
 
-The Mem0 integration is **fully implemented and functional**. The implementation includes:
+The Mem0 integration is **fully implemented and functional**. The application is running on port 4000 with Pro tier features enabled.
 
+### Features Implemented:
 - Core Mem0 service for memory management
-- Memory-enhanced chat endpoint with intelligent context retrieval
+- Memory-enhanced chat endpoint (Fitness Coach AI)
+- **Personalized diet plan generation** based on user preferences and allergies
+- **Custom workout plan creation** considering injuries, goals, and equipment
 - File upload for memory extraction
-- User management system with JSON file persistence
+- User management with JSON file persistence
 - Full CRUD operations for memories
-- Fitness AI-optimized memory extraction (Pro tier)
+- **Advanced search** with reranking, filters, and keyword search (Pro)
+- **Knowledge Graph** queries - entities and relationships (Pro)
+- **Project configuration** - custom instructions and categories (Pro)
+- Profile completeness analysis
+- Motivational responses for mood/energy states
+- Terminal CLI chat client
 
 ---
 
@@ -51,7 +59,7 @@ The Mem0 integration is **fully implemented and functional**. The implementation
 - `mem0.module.ts` - NestJS module definition
 - `mem0.service.ts` - Core service with Mem0 API integration and Pro/Free tier support
 - `dto/add-memory.dto.ts` - DTOs for adding memories with Mem0Options
-- `dto/search-memory.dto.ts` - DTO for searching memories
+- `dto/search-memory.dto.ts` - DTOs for searching memories with advanced filters
 
 ### 2. Memory Feature Module (`src/memory/`)
 
@@ -68,6 +76,25 @@ The Mem0 integration is **fully implemented and functional**. The implementation
 - `users.controller.ts` - REST API endpoints for user management
 - `dto/create-user.dto.ts` - DTO for user creation
 
+### 4. Constants (`src/constants.ts`)
+
+Centralized configuration including:
+- OpenAI settings (model, tokens, temperature)
+- Fitness Coach system prompt
+- Profile categories and questions
+- Memory search thresholds and limits
+- Fitness-optimized Mem0 Pro options (includes, excludes, customInstructions)
+- Motivational response templates
+
+### 5. CLI Chat Client (`cli-chat.ts`)
+
+Terminal-based chat interface with commands:
+- `/profile` - View fitness profile analysis
+- `/memories` - View all stored memories
+- `/user` - Switch or create user
+- `/mode` - Toggle between basic and memory chat
+- `/clear`, `/help`, `/quit`
+
 ---
 
 ## Mem0 Service Features
@@ -81,7 +108,8 @@ The `Mem0Service` (`src/mem0/mem0.service.ts`) provides the following capabiliti
 | `addMemory(dto)` | Add memories from conversation messages |
 | `addFromText(dto)` | Add memory from raw text (for file uploads) |
 | `updateMemory(memoryId, text, metadata)` | Update an existing memory |
-| `searchMemory(dto)` | Semantic search across memories |
+| `searchMemory(dto)` | Semantic search with filters |
+| `advancedSearch(dto)` | Search with reranking and graph data (Pro) |
 | `getMemories(userId)` | Get all memories for a user |
 | `getMemoriesByAgent(agentId)` | Get memories by agent ID |
 | `getMemory(memoryId)` | Get a specific memory by ID |
@@ -89,7 +117,30 @@ The `Mem0Service` (`src/mem0/mem0.service.ts`) provides the following capabiliti
 | `deleteAllUserMemories(userId)` | Delete all memories for a user |
 | `getMemoryHistory(memoryId)` | Get history of a memory's changes |
 
-### Type Definitions
+### Graph Operations (Pro Feature)
+
+| Method | Description |
+|--------|-------------|
+| `getGraphEntities(dto)` | Get entities (people, exercises, foods) |
+| `getGraphRelationships(dto)` | Get relationships between entities |
+| `searchGraphByEntity(userId, entityName)` | Find all connections to an entity |
+| `getEntitiesByType(userId, type, limit)` | Get entities of specific type |
+| `searchWithGraphContext(query, userId, depth)` | Semantic search + graph traversal |
+
+### Project Configuration (Pro Feature)
+
+| Method | Description |
+|--------|-------------|
+| `getProjectSettings()` | Get current project settings |
+| `updateCustomInstructions(instructions)` | Update extraction guidelines |
+| `updateCustomCategories(categories)` | Update memory categories |
+| `configureFitnessProject()` | Apply fitness-optimized configuration |
+
+---
+
+## Type Definitions
+
+### Core Interfaces
 
 ```typescript
 interface MemoryResult {
@@ -118,6 +169,37 @@ interface SearchResult {
   user_id?: string;
   agent_id?: string;
   metadata?: Record<string, any>;
+  categories?: string[];
+  created_at?: string;
+}
+```
+
+### Graph Interfaces
+
+```typescript
+interface GraphEntity {
+  name: string;
+  type: string;
+  properties?: Record<string, any>;
+}
+
+interface GraphRelationship {
+  source: string;
+  target: string;
+  relationship: string;
+  properties?: Record<string, any>;
+}
+
+interface GraphSearchResult {
+  entities: GraphEntity[];
+  relationships: GraphRelationship[];
+}
+
+interface AdvancedSearchResult {
+  memories: SearchResult[];
+  graph?: GraphSearchResult;
+  totalCount?: number;
+  reranked?: boolean;
 }
 ```
 
@@ -125,20 +207,19 @@ interface SearchResult {
 
 ```typescript
 interface Mem0Options {
-  // Selective memory extraction
+  // Selective memory extraction (Pro feature)
   includes?: string;
   excludes?: string;
 
-  // Extraction guidelines
+  // Extraction guidelines (Pro feature)
   customInstructions?: string;
 
-  // Custom categories for domain-specific labeling
-  customCategories?: Record<string, string>;
+  // NOTE: customCategories must be configured in Mem0 Dashboard
+  // See: https://app.mem0.ai/dashboard/project-settings
 
   // Control options
-  infer?: boolean;        // Default true
-  version?: string;       // "v2" recommended
-  enableGraph?: boolean;  // Build knowledge graph
+  infer?: boolean;        // Default true - extract structured memories
+  enableGraph?: boolean;  // Build knowledge graph (Pro feature)
 
   // Temporal options
   timestamp?: number;     // Unix timestamp
@@ -155,7 +236,7 @@ The implementation includes fitness-optimized memory extraction settings for Pro
 
 ### Pricing Tiers:
 - **FREE (Hobby)**: Basic memory add/search/get
-- **PRO ($249/mo)**: + enable_graph, custom_categories, custom_instructions, includes, excludes
+- **PRO ($249/mo)**: + enable_graph, custom_instructions, includes, excludes, reranking, keyword search
 
 ### Free Tier Defaults:
 ```typescript
@@ -165,37 +246,29 @@ const FITNESS_MEM0_DEFAULTS: Mem0Options = {
 ```
 
 ### Pro Tier Options (enabled with `MEM0_PRO_TIER=true`):
-```typescript
-const FITNESS_MEM0_PRO_OPTIONS: Mem0Options = {
-  includes: 'Extract personal details, food preferences, allergies, health information, exercise routines, fitness goals, body measurements, workout preferences, dietary restrictions, supplements, sleep patterns, injuries, and physical limitations',
-  excludes: 'Ignore casual conversation, opinions about apps, weather comments, greetings, small talk, and temporary complaints',
-  customInstructions: `Extract and categorize fitness-related information:
-    1) Exercise preferences with intensity levels (light/moderate/intense)
-    2) Injuries or physical limitations with affected body parts
-    3) Fitness goals with timeframes if mentioned
-    4) Dietary patterns including meal timing and calorie targets
-    5) Body measurements (weight, height, body fat percentage)
-    6) Sleep and recovery patterns
-    7) Supplement and medication usage
-    Convert relative dates to absolute dates when possible.
-    Flag any mentioned allergies as high-priority memories.
-    Track progress metrics when user shares workout results.`,
-  customCategories: {
-    fitness_goals: 'Weight loss, muscle gain, endurance, flexibility goals',
-    exercise_preferences: 'Preferred workouts, gym vs home, cardio vs strength',
-    dietary_info: 'Food preferences, allergies, meal timing, calorie targets',
-    body_metrics: 'Weight, height, body fat, measurements',
-    injuries_limitations: 'Current injuries, past injuries, physical limitations',
-    health_conditions: 'Medical conditions affecting fitness',
-    supplements: 'Vitamins, protein, pre-workout, medications',
-    sleep_recovery: 'Sleep patterns, rest days, recovery methods',
-    workout_schedule: 'Training days, preferred times, frequency',
-    progress_tracking: 'PRs, milestones, weight changes, measurements',
-  },
-  infer: true,
-  enableGraph: true,
-};
-```
+
+The Pro options include comprehensive extraction rules:
+
+**MUST EXTRACT categories:**
+- Personal & Health Profile (name, age, medical conditions, allergies)
+- Fitness Information (goals, preferences, routines)
+- Injuries & Limitations (current/past injuries, chronic pain)
+- Nutrition & Diet (preferences, allergies, supplements)
+- Lifestyle Factors (sleep, stress, work schedule)
+
+**RESPOND WITH MOTIVATION:**
+- Bored → Suggest fun workout or challenge
+- Tired → Encourage, remind of goals, suggest rest if needed
+- Low energy → Quick energy-boosting exercises
+- Unmotivated → Remind why they started, celebrate progress
+- Stressed → Suggest walking, yoga, breathing
+- Discouraged → Positive reinforcement
+
+**IGNORE COMPLETELY:**
+- Greetings, thank you, small talk
+- One-time events unrelated to fitness
+- Vague statements, hypotheticals
+- General knowledge questions
 
 ---
 
@@ -208,6 +281,12 @@ const FITNESS_MEM0_PRO_OPTIONS: Mem0Options = {
 | `POST` | `/memory/chat` | Chat with memory context |
 | `POST` | `/memory/upload` | Upload file for memory extraction |
 | `GET` | `/memory/search` | Semantic search memories |
+| `POST` | `/memory/search/advanced` | Advanced search with reranking (Pro) |
+| `GET` | `/memory/search/graph` | Search with graph context (Pro) |
+| `GET` | `/memory/graph/entities` | Get graph entities (Pro) |
+| `GET` | `/memory/graph/relationships` | Get graph relationships (Pro) |
+| `GET` | `/memory/graph/entity/:entity` | Search by entity name (Pro) |
+| `GET` | `/memory/graph/type/:type` | Get entities by type (Pro) |
 | `GET` | `/memory/user/:userId` | Get all memories for a user |
 | `GET` | `/memory/agent/:agentId` | Get all memories for an agent |
 | `GET` | `/memory/:memoryId` | Get a specific memory |
@@ -215,6 +294,11 @@ const FITNESS_MEM0_PRO_OPTIONS: Mem0Options = {
 | `PUT` | `/memory/:memoryId` | Update a specific memory |
 | `DELETE` | `/memory/:memoryId` | Delete a specific memory |
 | `DELETE` | `/memory/user/:userId/all` | Delete all user memories |
+| `GET` | `/memory/profile/:userId/analysis` | Get profile completeness analysis |
+| `GET` | `/memory/onboarding/prompt` | Get onboarding prompt |
+| `GET` | `/memory/project/settings` | Get project settings (Pro) |
+| `PUT` | `/memory/project/instructions` | Update custom instructions (Pro) |
+| `PUT` | `/memory/project/categories` | Update custom categories (Pro) |
 
 ### Users Controller Routes (`/users`)
 
@@ -225,6 +309,13 @@ const FITNESS_MEM0_PRO_OPTIONS: Mem0Options = {
 | `GET` | `/users/:id` | Get a specific user |
 | `DELETE` | `/users/:id` | Delete a user |
 | `POST` | `/users/:id/session` | Generate a session ID for a user |
+
+### Basic Routes (`/`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Health check |
+| `POST` | `/chat` | Basic chat (no memory) |
 
 ---
 
@@ -246,48 +337,54 @@ The `/memory/chat` endpoint implements a complete memory-enhanced conversation f
         │
         ▼
 ┌───────────────────┐
-│ Search Memories   │──▶ Semantic search (limit: 10 results)
+│ Get ALL Memories  │──▶ Build complete user profile context
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│ Filter by Score   │──▶ Keep memories with score > 3.5
-└───────────────────┘    Sort by score descending, take top 3
-        │
-        ▼
-┌───────────────────┐
-│ Build Context     │──▶ Format memories as system context
+│ Search Relevant   │──▶ Semantic search (threshold: 0.5, limit: 3)
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│ Get AI Response   │──▶ ChatGPT with memory context
+│ Analyze Profile   │──▶ Calculate completeness, find missing info
 └───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│ Store Conversation│──▶ Add user message + AI response to Mem0
-└───────────────────┘    (by user_id only, no agent_id or session_id)
+│ Build Context     │──▶ Combine full profile + relevant memories
+└───────────────────┘
         │
         ▼
 ┌───────────────────┐
-│ Return Response   │──▶ Include response, memories used, new memories created
+│ Get AI Response   │──▶ ChatGPT with Fitness Coach persona
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ Store Conversation│──▶ Add to Mem0 with Pro extraction rules
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ Return Response   │──▶ Include response, memories, profile %
 └───────────────────┘
 ```
 
-### Memory Score Filtering Logic
-
-The implementation uses intelligent score-based filtering:
-1. Fetch up to 10 memories from semantic search
-2. Filter to keep only memories with `score > 3.5`
-3. Sort remaining memories by score (highest first)
-4. Take the top 3 most relevant memories for context
+### Memory Search Configuration (from constants.ts)
 
 ```typescript
-const relevantMemories = searchResults
-  .filter((m) => m.score > 3.5)
-  .sort((a, b) => b.score - a.score)
-  .slice(0, 3);
+// Score threshold (0-1) for memory relevance
+const MEMORY_SEARCH_THRESHOLD = 0.5;
+
+// Maximum memories to retrieve in chat
+const MEMORY_SEARCH_LIMIT = 3;
+
+// Default limit for search API endpoint
+const MEMORY_SEARCH_DEFAULT_LIMIT = 10;
+
+// Reranking candidates (higher = better results, more latency)
+const SEARCH_RERANK_TOP_K = 20;
 ```
 
 ### Response Structure
@@ -295,21 +392,31 @@ const relevantMemories = searchResults
 ```typescript
 interface ChatResponse {
   success: boolean;
-  message: string;        // Original user message
-  response: string;       // AI response
-  memoriesUsed: string[]; // Memories retrieved for context
+  message: string;           // Original user message
+  response: string;          // AI response
+  memoriesUsed: string[];    // Memories retrieved for context
   newMemoriesCreated: number;
+  profileCompleteness?: number;  // 0-100%
+  isNewUser?: boolean;
 }
 ```
 
-### Request Structure
+---
 
-```typescript
-interface ChatWithMemoryDto {
-  message: string;  // Required: The user's message
-  userId: string;   // Required: The user ID for memory association
-}
-```
+## Profile Analysis
+
+The system tracks 6 fitness profile categories:
+
+| Category | What It Tracks |
+|----------|----------------|
+| Basic Info | Name, age, gender, height, weight |
+| Fitness Goals | Weight loss, muscle gain, timeline |
+| Current Fitness | Experience level, routine, frequency |
+| Injuries & Limitations | Current/past injuries, conditions |
+| Diet & Nutrition | Diet type, allergies, supplements |
+| Lifestyle | Sleep, stress, equipment access |
+
+Profile completeness is calculated as percentage of categories with data.
 
 ---
 
@@ -317,16 +424,11 @@ interface ChatWithMemoryDto {
 
 The `/memory/upload` endpoint allows uploading text files to extract and store memories:
 
-### Supported Features:
-- Accepts any text file via multipart/form-data
-- Associates memories with a specific user (user_id only)
-- Stores file metadata (filename, mimetype, size, upload timestamp)
-
 ### Request:
 - `file` - The file to upload (multipart/form-data)
 - `userId` - Required user ID
 
-### Response Structure:
+### Response:
 ```typescript
 interface UploadResponse {
   success: boolean;
@@ -335,12 +437,6 @@ interface UploadResponse {
   message: string;
 }
 ```
-
-### Process:
-1. Read file buffer as UTF-8 text
-2. Validate file is not empty
-3. Convert to message format for Mem0
-4. Store with user association and metadata
 
 ---
 
@@ -359,7 +455,7 @@ MEM0_API_KEY=your-mem0-api-key
 MEM0_PRO_TIER=true
 ```
 
-### Dependencies
+### Dependencies (package.json)
 
 ```json
 {
@@ -372,42 +468,34 @@ MEM0_PRO_TIER=true
 
 ---
 
-## User Management
+## Running the Application
 
-The implementation includes a file-backed user management system:
+### Start Server
 
-### Features:
-- Create users with unique IDs (`user-{uuid}` format)
-- Persistent storage in `users.json` file
-- Get, update, delete users
-- Check user existence (required for memory operations)
-- Generate session IDs for conversations
-- Default demo user created on startup if no users exist
+```bash
+# Development
+npm run start:dev
 
-### User Interface:
-```typescript
-interface User {
-  id: string;
-  name: string;
-  email?: string;
-  metadata?: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
-}
+# Clean start (clears build artifacts)
+npm run start:clean
+
+# Production
+npm run build && npm run start:prod
 ```
 
-### Default Demo User:
-```json
-{
-  "id": "user-demo-001",
-  "name": "Demo User",
-  "email": "demo@example.com",
-  "metadata": { "role": "demo" }
-}
-```
+### CLI Chat Client
 
-### Storage:
-Users are stored in `users.json` at the project root and persist across server restarts.
+```bash
+# Run locally
+npx ts-node cli-chat.ts
+
+# With custom server URL
+npx ts-node cli-chat.ts http://your-server.com
+
+# Or download and run
+curl -o chat.js http://localhost:4000/cli.js
+node chat.js
+```
 
 ---
 
@@ -419,162 +507,111 @@ Users are stored in `users.json` at the project root and persist across server r
 curl -X POST http://localhost:4000/memory/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "My favorite color is blue",
+    "message": "I want to lose 10kg in 3 months",
     "userId": "user-demo-001"
   }'
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "My favorite color is blue",
-  "response": "That's great! Blue is a wonderful color...",
-  "memoriesUsed": [],
-  "newMemoriesCreated": 1
-}
-```
-
-### 2. Search Memories
+### 2. Advanced Search with Reranking
 
 ```bash
-curl "http://localhost:4000/memory/search?q=favorite%20color&userId=user-demo-001&limit=5"
-```
-
-### 3. Get User Memories
-
-```bash
-curl http://localhost:4000/memory/user/user-demo-001
-```
-
-### 4. Upload File for Memory
-
-```bash
-curl -X POST http://localhost:4000/memory/upload \
-  -F "file=@document.txt" \
-  -F "userId=user-demo-001"
-```
-
-### 5. Update Memory
-
-```bash
-curl -X PUT http://localhost:4000/memory/memory-id-here \
+curl -X POST http://localhost:4000/memory/search/advanced \
   -H "Content-Type: application/json" \
   -d '{
-    "text": "Updated memory content",
-    "metadata": { "updated": true }
+    "query": "what are my fitness goals?",
+    "userId": "user-demo-001",
+    "rerank": true,
+    "includeGraph": true
   }'
 ```
 
-### 6. Delete Memory
+### 3. Get Graph Entities
 
 ```bash
-curl -X DELETE http://localhost:4000/memory/memory-id-here
+curl "http://localhost:4000/memory/graph/entities?userId=user-demo-001&type=Exercise"
 ```
 
-### 7. Create User
+### 4. Search by Entity
 
 ```bash
-curl -X POST http://localhost:4000/users \
+curl "http://localhost:4000/memory/graph/entity/running?userId=user-demo-001"
+```
+
+### 5. Get Profile Analysis
+
+```bash
+curl http://localhost:4000/memory/profile/user-demo-001/analysis
+```
+
+### 6. Request a Diet Plan
+
+```bash
+curl -X POST http://localhost:4000/memory/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "metadata": { "plan": "premium" }
+    "message": "Can you create a weekly meal plan for me?",
+    "userId": "user-demo-001"
   }'
 ```
 
-### 8. Generate Session ID
+The AI will use stored memories about:
+- Dietary preferences (vegetarian, keto, etc.)
+- Food allergies and intolerances
+- Calorie/macro goals
+- Foods they like/dislike
+- Meal timing preferences
+
+### 7. Request a Workout Plan
 
 ```bash
-curl -X POST http://localhost:4000/users/user-demo-001/session
+curl -X POST http://localhost:4000/memory/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Create a 4-day workout plan for me",
+    "userId": "user-demo-001"
+  }'
 ```
+
+The AI will consider:
+- Fitness goals (weight loss, muscle gain, etc.)
+- Injuries and limitations (will avoid exercises that could worsen them)
+- Experience level
+- Available equipment (gym vs home)
+- Preferred workout days/times
 
 ---
 
 ## Key Implementation Details
 
 ### 1. Graceful Initialization
-The Mem0 service implements `OnModuleInit` to initialize the client on startup. If `MEM0_API_KEY` is not set, it logs a warning instead of throwing an error, allowing the app to run without memory features.
+The Mem0 service implements `OnModuleInit` to initialize the client on startup. If `MEM0_API_KEY` is not set, it logs a warning instead of throwing an error.
 
-### 2. Client Validation
-All service methods call `ensureClient()` to verify the Mem0 client is initialized before making API calls.
-
-### 3. Memory Context Building
-The controller builds a formatted context string from retrieved memories:
-
-```typescript
-private buildMemoryContext(memories: SearchResult[]): string {
-  if (!memories || memories.length === 0) {
-    return '';
-  }
-  const memoryStrings = memories.map((m, i) => `${i + 1}. ${m.memory}`);
-  return `Here is what I remember about this user:\n${memoryStrings.join('\n')}\n\nUse this context to provide a personalized response.`;
-}
-```
-
-### 4. User-Only Memory Association
-The current implementation uses **only `user_id`** for memory association. The `agent_id` and `session_id` parameters are commented out throughout the codebase for simplicity.
-
-### 5. Score Logging
-Memory search scores are logged to console for debugging:
-```typescript
-console.log('Memory search scores:', searchResults.map(m => m.score));
-```
-
-### 6. Pro Tier Detection
-The service automatically detects and applies Pro tier options based on the `MEM0_PRO_TIER` environment variable:
+### 2. Pro Tier Auto-Detection
 ```typescript
 this.isProTier = this.configService.get<string>('MEM0_PRO_TIER') === 'true';
 ```
+When enabled, logs: `✅ Mem0 Pro tier enabled - using advanced fitness extraction features`
 
----
+### 3. Profile Categorization
+The controller categorizes memories by keywords for profile analysis:
+- Personal Info: name, age, height, weight
+- Fitness Goals: goal, want to, target
+- Exercise: workout, gym, cardio, lift
+- Injuries: pain, injury, surgery, limitation
+- Diet: diet, allergy, protein, meal
+- Lifestyle: sleep, stress, equipment
 
-## Postman Collection
+### 4. Motivational Responses
+When users express mood states (tired, bored, stressed), the system provides motivation instead of ignoring these comments. Templates are in `FITNESS_FOLLOWUP_TEMPLATES.after_mood_mention` and `after_low_motivation`.
 
-A Postman collection is available at `postman/NestJS-Mem0-Collection.postman_collection.json` with pre-configured requests for testing all endpoints.
+### 5. Graph Features (Pro)
+Graph endpoints use internal SDK methods:
+- `(this.client as any).getEntities(options)`
+- `(this.client as any).getRelations(options)`
 
----
-
-## Deployment
-
-### Render Deployment
-
-The application includes a `render.yaml` for easy deployment to Render:
-
-```yaml
-services:
-  - type: web
-    name: nestjs-chatgpt-starter
-    runtime: node
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: MEM0_API_KEY
-        sync: false
-```
-
-**Note:** The `users.json` file uses local file storage which will reset on each deploy on Render's free tier (ephemeral filesystem).
-
----
-
-## Limitations & Considerations
-
-1. **File-Based User Storage**: Users are stored in `users.json` which persists locally but will reset on deployment to ephemeral environments. For production, integrate a proper database.
-
-2. **No Authentication**: The API currently has no authentication layer. Add JWT or other auth for production use.
-
-3. **Mem0 Cloud Dependency**: The implementation uses Mem0 Cloud API. For self-hosted Mem0, modify the client initialization.
-
-4. **Rate Limits**: Both OpenAI and Mem0 have API rate limits. Consider implementing rate limiting for production.
-
-5. **Score Threshold**: The 3.5 score threshold for memory relevance may need tuning based on your use case.
-
-6. **Pro Tier Features**: Advanced memory extraction features (custom categories, graph, includes/excludes) require Mem0 Pro subscription.
+### 6. Custom Categories Note
+Custom categories must be configured in the Mem0 Dashboard at project level, not via API:
+https://app.mem0.ai/dashboard/project-settings
 
 ---
 
@@ -587,18 +624,34 @@ services:
 | Chat with Memory | ✅ Complete |
 | File Upload | ✅ Complete |
 | Memory CRUD | ✅ Complete |
-| Memory Update | ✅ Complete |
+| Advanced Search | ✅ Complete (Pro) |
+| Graph Queries | ✅ Complete (Pro) |
+| Project Config | ✅ Complete (Pro) |
+| Profile Analysis | ✅ Complete |
+| Motivational Responses | ✅ Complete |
 | User Management | ✅ Complete |
-| User Persistence | ✅ Complete (JSON file) |
-| Score-Based Filtering | ✅ Complete |
-| Pro Tier Support | ✅ Complete |
+| CLI Chat Client | ✅ Complete |
 | Error Handling | ✅ Complete |
 | Type Definitions | ✅ Complete |
 
-The Mem0 implementation is production-ready for demo/development purposes. For production deployment, consider adding:
-- Persistent user storage (database)
-- Authentication/Authorization
-- Rate limiting
-- Input validation with class-validator
-- Logging and monitoring
-- Adjusting score threshold based on usage patterns
+---
+
+## Limitations & Considerations
+
+1. **File-Based User Storage**: Users are stored in `users.json`. For production, integrate a database.
+
+2. **No Authentication**: Add JWT or API key auth for production use.
+
+3. **Mem0 Cloud Dependency**: Uses Mem0 Cloud API. For self-hosted, modify client initialization.
+
+4. **Rate Limits**: Both OpenAI and Mem0 have API rate limits.
+
+5. **Custom Categories**: Must be configured in Mem0 Dashboard, not via API.
+
+6. **Telemetry Errors**: You may see `Telemetry event capture failed` errors - these are non-blocking and from the mem0ai SDK trying to send analytics.
+
+---
+
+## Postman Collection
+
+A Postman collection is available at `postman/NestJS-Mem0-Collection.postman_collection.json`.

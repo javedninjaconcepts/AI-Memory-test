@@ -11,6 +11,9 @@ A NestJS starter project integrated with the **official OpenAI API** for buildin
 - ✅ **TypeScript Support** - Full type safety
 - ✅ **Ready-to-use ChatGPT Service** - Pre-configured service for chat completions
 - ✅ **REST API Endpoint** - Example POST endpoint to interact with ChatGPT
+- ✅ **Mem0 Integration** - Built-in memory management for personalized conversations
+- ✅ **Terminal CLI** - Interactive command-line interface accessible globally
+- ✅ **User Management** - Multi-user support with persistent memory
 
 ## 🚀 Quick Start
 
@@ -50,6 +53,91 @@ npm run start:prod
 ```
 
 The server will start on `http://localhost:3000`
+
+## 🖥️ Terminal CLI (Interactive Chat)
+
+This project includes a powerful terminal-based chat client that you can use anywhere!
+
+### Using the Hosted CLI (Global Access)
+
+Anyone can use the CLI without installing anything - just Node.js required:
+
+```bash
+# Option 1: Run directly from URL (one-liner)
+curl -sL https://ai-memory-test.onrender.com/cli.js | node - https://ai-memory-test.onrender.com
+
+# Option 2: Download and run (recommended)
+curl -o chatgpt-cli.js https://ai-memory-test.onrender.com/cli.js
+node chatgpt-cli.js https://ai-memory-test.onrender.com
+```
+
+### Using the CLI Locally
+
+```bash
+# Run with local server
+npm run chat
+
+# Or with ts-node directly
+npx ts-node cli-chat.ts
+
+# Connect to different server
+npx ts-node cli-chat.ts http://localhost:4000
+npx ts-node cli-chat.ts https://your-hosted-api.com
+```
+
+### CLI Features
+
+The terminal client includes:
+
+- 🧠 **Memory Mode** - Conversations with persistent memory per user
+- 💬 **Basic Mode** - Stateless ChatGPT conversations
+- 👤 **User Management** - Create and switch between users
+- 📚 **View Memories** - See what the AI remembers about you
+- 🎨 **Beautiful Interface** - Clean, intuitive terminal UI
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `/mode` | Switch between basic and memory chat modes |
+| `/user` | Create or switch user (required for memory mode) |
+| `/memories` | View your stored memories |
+| `/clear` | Clear the screen |
+| `/help` | Show help message |
+| `/quit` | Exit the chat |
+
+### Example CLI Session
+
+```
+╔════════════════════════════════════════════════════════════╗
+║           🤖 NestJS ChatGPT Terminal Client 🤖             ║
+╠════════════════════════════════════════════════════════════╣
+║  Server: https://ai-memory-test.onrender.com              ║
+╚════════════════════════════════════════════════════════════╝
+
+✅ Connected to API
+
+[🧠 Memory Mode] [👤 No user]
+
+You: /user
+👤 User Management
+  1. Create new user
+  2. Select existing user
+  3. Cancel
+
+Choose option (1-3): 1
+Enter name: John
+Enter email: john@example.com
+
+✅ User created: John (abc123...)
+
+You: My favorite color is blue
+🤖 AI: That's lovely! Blue is a great choice...
+💾 1 new memory(ies) stored
+
+You: What's my favorite color?
+🤖 AI: Your favorite color is blue!
+```
 
 ## 📡 API Usage
 
