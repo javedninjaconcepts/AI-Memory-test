@@ -75,7 +75,7 @@ export class MemoryController {
     }
 
     // Verify user exists
-    if (!this.usersService.userExists(dto.userId)) {
+    if (!(await this.usersService.userExists(dto.userId))) {
       throw new NotFoundException(`User with ID ${dto.userId} not found`);
     }
 
@@ -178,7 +178,7 @@ export class MemoryController {
     }
 
     // Verify user exists
-    if (!this.usersService.userExists(userId)) {
+    if (!(await this.usersService.userExists(userId))) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
@@ -556,7 +556,7 @@ export class MemoryController {
     @Param('userId') userId: string,
   ): Promise<{ success: boolean; memories: MemoryResult[] }> {
     // Verify user exists
-    if (!this.usersService.userExists(userId)) {
+    if (!(await this.usersService.userExists(userId))) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
@@ -689,7 +689,7 @@ export class MemoryController {
     @Param('userId') userId: string,
   ): Promise<{ success: boolean; message: string }> {
     // Verify user exists
-    if (!this.usersService.userExists(userId)) {
+    if (!(await this.usersService.userExists(userId))) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
@@ -840,7 +840,7 @@ export class MemoryController {
       suggestedQuestion?: string;
     };
   }> {
-    if (!this.usersService.userExists(userId)) {
+    if (!(await this.usersService.userExists(userId))) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 

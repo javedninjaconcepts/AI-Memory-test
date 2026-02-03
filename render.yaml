@@ -1,3 +1,10 @@
+databases:
+  - name: nestjs-chatgpt-db
+    plan: free # free tier: 1GB storage, 90-day expiry
+    region: oregon
+    databaseName: nestjs_chatgpt
+    user: nestjs_user
+
 services:
   - type: web
     name: nestjs-chatgpt-starter
@@ -9,6 +16,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nestjs-chatgpt-db
+          property: connectionString
       - key: OPENAI_API_KEY
         sync: false # You'll set this in Render dashboard
       - key: MEM0_API_KEY
