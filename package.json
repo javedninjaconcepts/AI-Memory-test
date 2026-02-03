@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build && npm run build:cli",
+    "build": "npx nest build && npm run build:cli",
     "build:cli": "esbuild cli-chat.ts --bundle --platform=node --target=node18 --outfile=public/cli.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
