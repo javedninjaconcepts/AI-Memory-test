@@ -341,7 +341,7 @@ export class Mem0Service implements OnModuleInit {
   private buildSearchFilters(dto: SearchMemoryDto): Record<string, any> {
     const filters: Record<string, any> = {};
 
-    // Category filters
+    // Category filters (only if explicitly specified)
     if (dto.categories?.length) {
       filters.categories = { in: dto.categories };
     }

@@ -80,40 +80,74 @@ export class MemoryController {
     }
 
     try {
-      // Step 1: Get ALL user memories to understand their complete profile
-      const allMemories = await this.mem0Service.getMemories(dto.userId);
-      const isNewUser = allMemories.length === 0;
+      // Step 1: Always fetch user_profile category (guaranteed profile info)
+      const profileMemories = await this.mem0Service.searchMemory({
+        query: 'user profile name age gender personal details',
+        userId: dto.userId,
+        limit: MEMORY_SEARCH_LIMIT,
+        threshold: 0.3, // Lower threshold to get more profile matches
+        categories: ['user_profile'], // Your custom category
+      });
 
-      // Step 2: Search for relevant memories for this specific query
-      const relevantMemories = await this.mem0Service.searchMemory({
+      // Step 2: Search for context-relevant memories (AI finds relevant ones)
+      const contextMemories = await this.mem0Service.searchMemory({
         query: dto.message,
         userId: dto.userId,
         limit: MEMORY_SEARCH_LIMIT,
         threshold: MEMORY_SEARCH_THRESHOLD,
+        // No category filter - let AI find relevant from ALL categories
       });
 
-      // Step 3: Build comprehensive context from ALL memories for profile analysis
-      // But only pass relevant ones to the response generation
-      const fullProfileContext = this.buildFullProfileContext(allMemories);
-      const relevantContext = this.buildMemoryContext(relevantMemories);
-      const memoriesUsed = relevantMemories.map((m) => m.memory);
+      // Step 3: Get ALL memories for completeness check
+      const allMemories = await this.mem0Service.getMemories(dto.userId);
+      const isNewUser = allMemories.length === 0;
 
-      // Combine relevant context with profile overview
-      const combinedContext = fullProfileContext
-        ? `${fullProfileContext}\n\n--- RELEVANT TO CURRENT QUERY ---\n${relevantContext || 'No specific memories match this query.'}`
-        : relevantContext;
+      // Step 4: Combine and deduplicate memories (profile + context-relevant)
+      const memoryMap = new Map<string, typeof profileMemories[0]>();
+      
+      // Add profile memories first (priority)
+      profileMemories.forEach((m) => memoryMap.set(m.id, m));
+      
+      // Add context memories (won't overwrite profile ones due to Map)
+      contextMemories.forEach((m) => {
+        if (!memoryMap.has(m.id)) {
+          memoryMap.set(m.id, m);
+        }
+      });
+      
+      const combinedMemories = Array.from(memoryMap.values());
+
+      // Step 5: Build context
+      const fullProfileContext = this.buildFullProfileContext(allMemories);
+      const profileContext = this.buildMemoryContext(profileMemories);
+      const relevantContext = this.buildMemoryContext(contextMemories);
+      const memoriesUsed = combinedMemories.map((m) => m.memory);
+
+      // Combine profile + context-relevant memories
+      const contextSections: string[] = [];
+      
+      // Always include user profile section
+      if (profileContext) {
+        contextSections.push(`--- USER PROFILE (Mainly for user's name, use other details only if relevant) ---\n${profileContext}`);
+      } else if (fullProfileContext) {
+        contextSections.push(fullProfileContext);
+      }
+      
+      // Add context-relevant memories
+      if (relevantContext) {
+        contextSections.push(`--- RELEVANT TO CURRENT QUERY ---\n${relevantContext}`);
+      }
+      
+      const combinedContext = contextSections.join('\n\n') || 'No memories found for this user.';
 
       // Log for debugging
       if (isNewUser) {
         console.log('👋 New user detected - will use onboarding flow');
       } else {
         console.log(`📚 User has ${allMemories.length} total memories`);
-        if (relevantMemories.length > 0) {
-          console.log(`   Found ${relevantMemories.length} relevant to query:`);
-          relevantMemories.forEach((m, i) => {
-            console.log(`   ${i + 1}. [Score: ${m.score.toFixed(3)}] ${m.memory}`);
-          });
-        }
+        console.log(`   Profile memories: ${profileMemories.length}`);
+        console.log(`   Context-relevant: ${contextMemories.length}`);
+        console.log(`   Combined unique: ${combinedMemories.length}`);
       }
 
       // Step 4: Analyze profile completeness
