@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "npx nest build && echo '=== dist folder contents ===' && ls -la dist/ && npm run build:cli",
+    "build": "npx nest build && npm run build:cli",
     "build:cli": "esbuild cli-chat.ts --bundle --platform=node --target=node18 --outfile=public/cli.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -14,7 +14,7 @@
     "start:clean": "./start.sh",
     "kill:port": "lsof -ti:4000 | xargs kill -9 2>/dev/null || echo 'Port 4000 is free'",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
