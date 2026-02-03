@@ -22,7 +22,12 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "chat": "npx ts-node cli-chat.ts",
-    "chat:remote": "npx ts-node cli-chat.ts"
+    "chat:remote": "npx ts-node cli-chat.ts",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm -- migration:generate -d src/data-source.ts",
+    "migration:run": "npm run typeorm -- migration:run -d dist/data-source.js",
+    "migration:revert": "npm run typeorm -- migration:revert -d dist/data-source.js",
+    "migration:show": "npm run typeorm -- migration:show -d dist/data-source.js"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",

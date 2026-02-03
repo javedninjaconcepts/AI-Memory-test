@@ -28,6 +28,8 @@ import { User } from './users/entities/user.entity';
             type: 'postgres',
             url: databaseUrl,
             entities: [User],
+            migrations: [__dirname + '/migrations/*.js'],
+            migrationsRun: false, // Migrations run via CLI in build step
             synchronize: !isProduction, // Auto-sync in dev, not in production
             logging: !isProduction,
             ssl: isProduction ? { rejectUnauthorized: false } : false,
@@ -42,6 +44,8 @@ import { User } from './users/entities/user.entity';
           password: configService.get<string>('DB_PASSWORD', 'postgres'),
           database: configService.get<string>('DB_DATABASE', 'nestjs_chatgpt'),
           entities: [User],
+          migrations: [__dirname + '/migrations/*.js'],
+          migrationsRun: false, // Migrations run via CLI
           synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
           logging: configService.get<boolean>('DB_LOGGING', false),
         };
